@@ -4,7 +4,7 @@ clear all; clc; close all;
 cd('/home/disk4/laurenza/osl-new/osl-core') % change this to reflect where your version of osl is downloaded
 osl_startup;
 
-%% Initialise file settings 
+%% Initialise file settings
 % This cell just sets up some objects pointing to where all our data is
 % stored. This can be really useful if you have many subjects' data
 
@@ -22,9 +22,9 @@ datadir = '/Volumes/TASER/Lauren_osl_course/henson_sub01/maxfilter_output';
 filePattern = fullfile(rawdir, '*.fif');
 fifFiles = dir(filePattern);
 for f = 1:length(fifFiles)
-  baseFileName = fifFiles(f).name;
-  rawfif_files(f,:) = cellstr(fullfile(rawdir, baseFileName));
-  clear baseFileName fullFileName
+    baseFileName = fifFiles(f).name;
+    rawfif_files(f,:) = cellstr(fullfile(rawdir, baseFileName));
+    clear baseFileName fullFileName
 end
 clear filePattern fifFiles
 
@@ -33,9 +33,9 @@ clear filePattern fifFiles
 filePattern = fullfile(datadir, '*sss.fif');
 fifFiles = dir(filePattern);
 for f = 1:length(fifFiles)
-  baseFileName = fifFiles(f).name;
-  maxfif_files(f,:) = cellstr(fullfile(datadir, baseFileName));
-  clear baseFileName fullFileName
+    baseFileName = fifFiles(f).name;
+    maxfif_files(f,:) = cellstr(fullfile(datadir, baseFileName));
+    clear baseFileName fullFileName
 end
 clear filePattern fifFiles
 
@@ -46,16 +46,16 @@ clear filePattern fifFiles
 
 % Import the raw data (creates a .dat and .mat file in rawdir)
 for subnum = 1:length(rawfif_files)
-    D = osl_import(rawfif_files{subnum}); 
+    D = osl_import(rawfif_files{subnum});
     clear D
 end
 
 filePattern = fullfile(rawdir, '*.mat');
 fifFiles = dir(filePattern);
 for f = 1:length(fifFiles)
-  baseFileName = fifFiles(f).name;
-  rawmat_files(f,:) = cellstr(fullfile(rawdir, baseFileName));
-  clear baseFileName fullFileName
+    baseFileName = fifFiles(f).name;
+    rawmat_files(f,:) = cellstr(fullfile(rawdir, baseFileName));
+    clear baseFileName fullFileName
 end
 clear filePattern fifFiles
 
@@ -66,7 +66,7 @@ for subnum = 1:length(rawmat_files)
     clear D
 end
 
-%% View maxfiltered data  
+%% View maxfiltered data
 % Now let's see what effect the MaxFilter operation has on the data.
 
 % Import the maxfiltered data (creates a .dat and .mat file in datadir)
@@ -78,9 +78,9 @@ end
 filePattern = fullfile(datadir, '*.mat');
 fifFiles = dir(filePattern);
 for f = 1:length(fifFiles)
-  baseFileName = fifFiles(f).name;
-  maxmat_files(f,:) = cellstr(fullfile(datadir, baseFileName));
-  clear baseFileName fullFileName
+    baseFileName = fifFiles(f).name;
+    maxmat_files(f,:) = cellstr(fullfile(datadir, baseFileName));
+    clear baseFileName fullFileName
 end
 clear filePattern fifFiles
 
@@ -93,18 +93,25 @@ for subnum = 1:length(maxmat_files)
     D = oslview(D)
     waitfor(gca)
     
-    % The default spectrum is from the MEGPLANARS. Change the third
-    % argument to MEGGRAD, MEGMAG or EEG to view the spectrum from other
-    % channels
-    osl_quick_spectra(D) 
+    % We have two options for visualising the spectra. To make things
+    % efficient here we'll call our own pwelch function on just one
+    % channel, but once we've downsampled we'll use osl_quick_spectra(D)
+    data=D(:,:,:);
+    figure;pwelch(data(3,1:1e4),[],[],[],D.fsample);
+    xlabel('Frequency (Hz)');ylabel('PSD');
+    title(['PSD for channel ',D.chanlabels(3)]);xlim([1 70]);
+    set(gca,'FontSize',16)
+    
     waitfor(gca)
     clear D
 end
 
+% Note that it might be a good idea to save-out the "max_mat" files
+% somewhere to disk, in case you want to pause your analysis or only re-run
+% part of the pipeline.
 %% Explore the MaxFiltered D object
-% Let's load in our MaxFiltered data. 
-% What do you notice about the D object? What can you do with it? Have a
-% play!
+% Let's load in our MaxFiltered data. What do you notice about the D
+% object? What can you do with it? Have a play!
 D = spm_eeg_load(maxmat_files{1})
 
 
@@ -132,16 +139,13 @@ D.save();
 % experimental recording - we might want to discard any subjects who fidget
 % too much!
 
-% The following line should work on data collected in Oxford:
-% filePattern = fullfile(datadir, '*hpi.log'); % may also be .pos file
-% logFiles = dir(filePattern);
-% for f = 1:length(logFiles)
-%   baseFileName = logFiles(f).name;
-%   fullFileName = fullfile(datadir, baseFileName);
-%   hpi_temp = osl_headpos(fullFileName,1);
-%   hpi(f,:) = hpi_temp;
-%   hpi_fits(f,:) = mean(hpi(f,:).hpi_fit); 
-%   clear hpi_temp baseFileName fullFileName
+% The following line should work on data collected in Oxford: filePattern =
+% fullfile(datadir, '*hpi.log'); % may also be .pos file logFiles =
+% dir(filePattern); for f = 1:length(logFiles)
+%   baseFileName = logFiles(f).name; fullFileName = fullfile(datadir,
+%   baseFileName); hpi_temp = osl_headpos(fullFileName,1); hpi(f,:) =
+%   hpi_temp; hpi_fits(f,:) = mean(hpi(f,:).hpi_fit); clear hpi_temp
+%   baseFileName fullFileName
 % end
 
 
@@ -164,7 +168,7 @@ hpi_fits(f,:) = mean(hpi(f,:).hpi_fit); % values should be very high ie. > .99
 
 use_existing = true;
 
-% outdir = '/home/disk4/laurenza/Preprocessing_Workshop/Coregistration';    
+% outdir = '/home/disk4/laurenza/Preprocessing_Workshop/Coregistration';
 % mkdir(outdir)
 
 structural_files={'/Volumes/TASER/Lauren_osl_course/henson_sub01/mprage.nii'}
@@ -175,7 +179,7 @@ for subnum = 1:length(maxmat_files)
     % Load data in from spm_sss, note that any changes in this loop are
     % saved into the same file.
     D = spm_eeg_load(maxmat_files{subnum});
-       
+    
     % Coregistration is carried out using a call to osl_headmodel.
     coreg_settings = struct;
     coreg_settings.D = D.fullfile;
@@ -188,7 +192,7 @@ for subnum = 1:length(maxmat_files)
     coreg_settings.fid.label.rpa='RPA';
     D = osl_headmodel(coreg_settings);
     
-    % Call out the RAC
+    % LOOK AT YOUR DATA! Call out the RAC.
     osl_RAC(D);
     clear h D
 end
@@ -231,9 +235,9 @@ end
 % data) are applied by adding online montages to the SPM object.
 
 indir = datadir;
-outdir = '/home/disk4/laurenza/Preprocessing_Workshop/Preprocessed_Data';
+outdir = '/Volumes/TASER/Lauren_osl_course/henson_sub01/Preprocessed_data';
 mkdir(outdir)
-wd = '/home/disk4/laurenza/Preprocessing_Workshop/Temp_Dir';
+wd = '/Volumes/TASER/Lauren_osl_course/henson_sub01/tmp_dir';
 mkdir(wd)
 
 % Specify parcellation file for source space
@@ -241,70 +245,100 @@ p = parcellation( 'fmri_d100_parcellation_with_PCC_tighterMay15_v2_8mm' );
 
 sessions_to_check = []; % This will catch sessions to double check, although double checking of all data is recommended
 
-% Note for Ryan - maybe best not to do the below in a loop, and go through
-% one session in detail? 
 
 % Main loop through files within the study object
 for subnum = 1:length(maxmat_files)
-
-	% Load in MEEG data as an SPM object
+    
+    % Load in MEEG data as an SPM object
     D = spm_eeg_load(maxmat_files{subnum});
-
-	% Downsample and copy, or just copy
-	if D.fsample > 250
-		D = spm_eeg_downsample(struct('D',D,'fsample_new',250,'prefix',[wd '/'])); % Note - downsampling cannot be done in-place using prefix='', it just fails
-	else
-		D = D.copy(getfullpath(fullfile(wd,D.fname))); % Copy into working directory
+    
+    % 1) Downsample and copy, or just copy D object
+    if D.fsample > 250
+        D = spm_eeg_downsample(struct('D',D,'fsample_new',250,'prefix',[wd '/'])); % Note - downsampling cannot be done in-place using prefix='', it just fails
+    else
+        D = D.copy(getfullpath(fullfile(wd,D.fname))); % Copy into working directory
     end
     
-	% Apply a 1-45Hz passband filter - could also be a low-pass or
-	% high-pass filter
+    % 2) Apply a 1-45Hz passband filter - could also be a low-pass or
+    % high-pass filter
     D = osl_filter(D,[1 45],'prefix','');
-    
     D = oslview(D); % view the data after downsampling/filtering to see effect
-    waitfor(gca)
-    osl_quick_spectra(D); % note effect of filtering on spectra 
-    waitfor(gca)
-
-	% Apply automatric bad segment detection
-	D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true); 
-
+    osl_quick_spectra(D); % note effect of filtering on spectra
+    drawnow
+    
+    % 3) Also apply a 48-52Hz notch filter
+    D = osl_filter(D,-[48 52],'prefix','');
+    D = oslview(D); % view the data after downsampling/filtering to see effect
+    osl_quick_spectra(D); % note effect of filtering on spectra
+    drawnow
+    
+    % 4) Apply automatric bad segment detection
+    D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true);
+    
     D = oslview(D); % See where bad segments are marked in OSLview
     waitfor(gca)
     
-	% Run ICA artefact detection. This will automatically reject components
-	% which havoe correlations larger than .5 with either of the artefact
-	% channels.
-	D = osl_africa(D,'used_maxfilter',true);
-
-    % Check warnings in the command line to see if no ICs are detected 
+    % 5) Run ICA artefact detection. This will automatically reject
+    % components which have correlations larger than .5 with either of the
+    % artefact channels.
+    D = osl_africa(D,'used_maxfilter',true);
+    
+    % Check warnings in the command line to see if no ICs are detected
     % Check the D object now - you will see it has a montage applied.
     D
     
-	% Though the automatic correlations generally work well, we should be
-	% careful to check for unsusual datasets and possibly manually correct the
-	% automatic assessment. This is particularly important for relatively noisy
-	% data or when analysing a new dataset for the first time.
-	
-	% Here we will manally inspect the ICA component rejections for any dataset meeting the following criteria
-	% # More than 4 ICs rejected
-	% # Zero ICs rejected
-	% # No component rejected due to correlation with EOG
-	% # No component rejected due to correlation with ECG
+    % Though the automatic correlations generally work well, we should be
+    % careful to check for unsusual datasets and possibly manually correct
+    % the automatic assessment. This is particularly important for
+    % relatively noisy data or when analysing a new dataset for the first
+    % time. In short, we would **always** recommend **LOOKING AT YOUR
+    % DATA** and take nothing for granted!
+    
+    % Note that the manual inspection of artefactual components can be
+    % quite labour intensive. You might want to construct your for loop
+    % over subjects in such a way that you only process 5 or 10 subjects at
+    % a time so that you can have a break. We'd also recommend buying some
+    % caffeine (coffee), fruit (satsumas) and snacks (pringles) to keep you
+    % focussed!
+    
+    % Here we will manally inspect the ICA component rejections for any
+    % dataset meeting the following criteria:
+    %   1) More than 4 ICs rejected 2) Zero ICs rejected 3) No component
+    %   rejected due to correlation with EOG(s) 4) No component rejected
+    %   due to correlation with ECG
+    
+    % Note that we have had to change the channel numbers for the following
+    % line to work as we have Cambridge data. If you were analysing data
+    % collected in Oxford, uncomment out the following lines:
+    
+    %     if isempty(D.ica.bad_components) || length(D.ica.bad_components)
+    %     > 4
+    % fprintf('%d components rejected, recommend checking session\n',
+    % length(D.ica.bad_components))
+    %         sessions_to_check = cat(1,sessions_to_check,subnum);
+    %     elseif max(D.ica.metrics.corr_chan_308_EOG.value) < .5 || ...
+    %        max(D.ica.metrics.corr_chan_307_ECG.value) < .5
+    %         disp('no candidate components for either HEOG or ECG,
+    %         recommend checking session'); sessions_to_check =
+    %         cat(1,sessions_to_check,subnum);
+    %     end
+    
+    
     if isempty(D.ica.bad_components) || length(D.ica.bad_components) > 4
-        disp('%s components rejected, recommend checking session', length(D.ica.bad_components));
+        fprintf('%d components rejected, recommend checking session\n', length(D.ica.bad_components))
         sessions_to_check = cat(1,sessions_to_check,subnum);
-    elseif max(D.ica.metrics.corr_chan_308_EOG.value) < .5 || ...
-       max(D.ica.metrics.corr_chan_307_ECG.value) < .5
-        disp('no candidate components for either HEOG or ECG, recommend checking session');
+    elseif max(D.ica.metrics.corr_chan_367_EOG.value) < .5 || ...
+            max(D.ica.metrics.corr_chan_368_EOG.value) < .5 || ...
+            max(D.ica.metrics.corr_chan_369_ECG.value) < .5 || ...
+            disp('no candidate components for either HEOG or ECG, recommend checking session');
         sessions_to_check = cat(1,sessions_to_check,subnum);
     end
     
     % This is where manual Africa would go
     D = D.montage('remove',1:D.montage('getnumber')); % This removes the montage from the automatic AFRICA
     D = osl_africa(D,'do_ident','manual'); % Montage with manual AFRICA will be saved
-
-    % Normalise sensor types
+    
+    % 6) Normalise sensor types
     S = [];
     S.D = D;
     S.modalities = {'MEGMAG','MEGPLANAR'};
@@ -315,7 +349,7 @@ for subnum = 1:length(maxmat_files)
     S.force_pca_dim = 0;
     S.normalise_method = 'min_eig';
     D = normalise_sensor_data( S );
-   
+    
     % Check the D object now - you will see it has 2 montages applied, the
     % latest being the sensor normalised data
     D
@@ -323,16 +357,44 @@ for subnum = 1:length(maxmat_files)
     % This is where the pipeline would end for resting state data analysed
     % in sensor space
     
-% 	% Run LCMV Beamformer
-% 	D = osl_inverse_model(D,p.template_coordinates,'pca_order',50);
-% 
-% 	% Do parcellation
-% 	D = ROInets.get_node_tcs(D,p.parcelflag,'spatialBasis','Giles');
-% 	
-	% Save out
-    D.save
-	D = D.montage('switch',0);
-	D.copy(fullfile(outdir,D.fname));
+    % 7) Run LCMV Beamformer
+    D = osl_inverse_model(D,p.template_coordinates,'pca_order',50);
     
-    clear D
+    % 8) Do parcellation
+    D = ROInets.get_node_tcs(D,p.parcelflag,'spatialBasis','Giles');
+    
+    % Save out
+    D.save
+    D = D.montage('switch',0);
+    D.copy(fullfile(outdir,D.fname));
+    
 end
+%%
+% To finish, one of the key advantages of beamforming to an MNI-aligned
+% grid is that we can use a bunch of built in tools to visualise our source
+% space data on a template brain. This makes making figures for publication
+% nice and easy!
+
+% Switch back to the beamformer source space montage
+D=D.montage('switch',4);
+
+% Saving a nifti is as simple as calling the following:
+out_fname=p.savenii(D(:,1),'my_beautiful_figure.nii');
+
+% Here the output, out_fname, is the name of our new nifti file. The
+% input is a nvoxels x time matrix. Here we have just given the first time
+% point of our source space data, but we can also provide multiple time
+% points, e.g.:
+
+out_fname_movie=p.savenii(D(:,1:10),'my_beautiful_dynamic_figure.nii');
+
+% We can then visualise these outputs in fsleyes:
+fsleyes({out_fname,out_fname_movie})
+
+% There are many useful things you can do with a parcellation object and
+% the fsleyes function used above. Have a look here
+% https://ohba-analysis.github.io/osl-docs/matlab/osl_example_parcellation.html#!
+% but also just have a play!
+
+
+% Not covered today: epoching
